@@ -9,22 +9,23 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 -- // UPDATED CONFIGURATION \\ --
 local CONFIG = {
     Enabled = true,
+    PrioritizeX = true, -- [NEW] Toggles the "X" word attack logic
     MinWordLength = 2,
-    MaxWordLength = 30, -- Increased slightly to allow for longer killer words
+    MaxWordLength = 30,
     UseShortWords = false,
     RandomizeWords = true,
     
     -- HUMANIZATION SETTINGS
-    HumanMode = true,       -- Must be true for the new logic to work
-    MaxTotalTime = 3,       -- HARD LIMIT: Will never take longer than this (seconds)
-    MinTotalTime = 1,       -- The fastest it might randomly try to be
+    HumanMode = true,       
+    MaxTotalTime = 3,       
+    MinTotalTime = 1,       
     
-    ReactionMin = 1,     -- Time taken to "realize" it's your turn
+    ReactionMin = 1,     
     ReactionMax = 2,     
     
-    MistakeChance = 0,      -- (Optional feature, kept at 0 for now to ensure accuracy)
-    MicroPauseChance = 0.15,-- Chance to hesitate mid-word
-    SubmitDelay = 0.1,      -- Delay before pressing Enter
+    MistakeChance = 0,      
+    MicroPauseChance = 0.15,
+    SubmitDelay = 0.1,      
 }
 
 local WORD_DATABASE = {
@@ -148,16 +149,19 @@ local function getValidWord(prefix)
     
     if #validWords == 0 then return nil end
     
-    -- // UPDATED SORTING LOGIC: PRIORITY TO WORDS ENDING IN 'X' \\ --
+    -- // UPDATED SORTING LOGIC: TOGGLEABLE PRIORITY TO WORDS ENDING IN 'X' \\ --
     table.sort(validWords, function(a, b)
-        local aEndsWithX = a:sub(-1) == "x"
-        local bEndsWithX = b:sub(-1) == "x"
-        
-        -- Primary Sort: Words ending in 'x' come first
-        if aEndsWithX and not bEndsWithX then
-            return true
-        elseif not aEndsWithX and bEndsWithX then
-            return false
+        -- Only prioritize X if the new button is enabled
+        if CONFIG.PrioritizeX then
+            local aEndsWithX = a:sub(-1) == "x"
+            local bEndsWithX = b:sub(-1) == "x"
+            
+            -- Primary Sort: Words ending in 'x' come first
+            if aEndsWithX and not bEndsWithX then
+                return true
+            elseif not aEndsWithX and bEndsWithX then
+                return false
+            end
         end
         
         -- Secondary Sort: Length (Shortest first if enabled)
@@ -170,7 +174,7 @@ local function getValidWord(prefix)
     end)
     
     local selectedWord
-    -- Pick from the top. If X-ending words exist, they are at the top.
+    -- Pick from the top. If X-ending words exist and priority is on, they are at the top.
     if CONFIG.RandomizeWords then
         -- We only randomize among the top 3 to keep high-priority words active
         local index = math.random(1, math.min(3, #validWords))
@@ -394,8 +398,9 @@ local function createToggleUI()
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 180, 0, 150)
-    frame.Position = UDim2.new(0, 10, 0.5, -75)
+    -- INCREASED SIZE to fit the new button
+    frame.Size = UDim2.new(0, 180, 0, 190) 
+    frame.Position = UDim2.new(0, 10, 0.5, -95)
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     frame.BorderSizePixel = 0
     frame.Parent = screenGui
@@ -413,6 +418,7 @@ local function createToggleUI()
     title.Font = Enum.Font.GothamBold
     title.Parent = frame
     
+    -- [Toggle Enable Button]
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Size = UDim2.new(0.9, 0, 0, 30)
     toggleBtn.Position = UDim2.new(0.05, 0, 0, 30)
@@ -427,9 +433,26 @@ local function createToggleUI()
     toggleCorner.CornerRadius = UDim.new(0, 6)
     toggleCorner.Parent = toggleBtn
     
+    -- [NEW: X Attack Toggle Button]
+    local xAttackBtn = Instance.new("TextButton")
+    xAttackBtn.Size = UDim2.new(0.9, 0, 0, 30)
+    xAttackBtn.Position = UDim2.new(0.05, 0, 0, 70) -- Placed below the first button
+    xAttackBtn.BackgroundColor3 = CONFIG.PrioritizeX and Color3.fromRGB(180, 80, 180) or Color3.fromRGB(80, 80, 80)
+    xAttackBtn.Text = CONFIG.PrioritizeX and "X ATTACK: ON" or "X ATTACK: OFF"
+    xAttackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    xAttackBtn.TextSize = 12
+    xAttackBtn.Font = Enum.Font.GothamBold
+    xAttackBtn.Parent = frame
+
+    local xCorner = Instance.new("UICorner")
+    xCorner.CornerRadius = UDim.new(0, 6)
+    xCorner.Parent = xAttackBtn
+
+    -- [Status Label]
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Size = UDim2.new(1, 0, 0, 20)
-    statusLabel.Position = UDim2.new(0, 0, 0, 65)
+    -- Moved down to fit the new button
+    statusLabel.Position = UDim2.new(0, 0, 0, 110) 
     statusLabel.BackgroundTransparency = 1
     statusLabel.Text = "Waiting..."
     statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
@@ -437,10 +460,17 @@ local function createToggleUI()
     statusLabel.Font = Enum.Font.Gotham
     statusLabel.Parent = frame
     
+    -- Button Events
     toggleBtn.MouseButton1Click:Connect(function()
         CONFIG.Enabled = not CONFIG.Enabled
         toggleBtn.BackgroundColor3 = CONFIG.Enabled and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
         toggleBtn.Text = CONFIG.Enabled and "ENABLED" or "DISABLED"
+    end)
+    
+    xAttackBtn.MouseButton1Click:Connect(function()
+        CONFIG.PrioritizeX = not CONFIG.PrioritizeX
+        xAttackBtn.BackgroundColor3 = CONFIG.PrioritizeX and Color3.fromRGB(180, 80, 180) or Color3.fromRGB(80, 80, 80)
+        xAttackBtn.Text = CONFIG.PrioritizeX and "X ATTACK: ON" or "X ATTACK: OFF"
     end)
     
     task.spawn(function()
