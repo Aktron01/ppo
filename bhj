@@ -1,559 +1,1117 @@
 local Players = game:GetService("Players")
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local UserInputService = game:GetService("UserInputService")
+
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
+
+
 local LocalPlayer = Players.LocalPlayer
+
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
+
+
 -- // UPDATED CONFIGURATION \\ --
+
 local CONFIG = {
+
     Enabled = true,
+
     MinWordLength = 2,
+
     MaxWordLength = 20,
+
     UseShortWords = true,
+
     RandomizeWords = true,
+
     
+
     -- HUMANIZATION SETTINGS
+
     HumanMode = true,       -- Must be true for the new logic to work
+
     MaxTotalTime = 4.8,     -- HARD LIMIT: Will never take longer than this (seconds)
+
     MinTotalTime = 1.5,     -- The fastest it might randomly try to be
+
     
+
     ReactionMin = 0.35,     -- Time taken to "realize" it's your turn
+
     ReactionMax = 0.90,     
+
     
+
     MistakeChance = 0,      -- (Optional feature, kept at 0 for now to ensure accuracy)
+
     MicroPauseChance = 0.15,-- Chance to hesitate mid-word
+
     SubmitDelay = 0.1,      -- Delay before pressing Enter
+
 }
+
+
 
 local WORD_DATABASE = {
+
     A = {
+
         "ant", "ace", "age", "air", "aim", "art", "arm", "ash", "ask", "ate", "able", "acid", "also", "area", "army", "away", "apple", "anger", "among", "about",
+
         "abuse", "actor", "acute", "adapt", "admit", "adopt", "adult", "after", "again", "agent", "agony", "agree", "ahead", "alarm", "album", "alert", "alien", "align", "alike", "alive", "alley", "allow", "alloy", "alpha", "altar", "alter", "amaze", "amber", "amend", "angle", "angry", "ankle", "annoy", "apart", "apply", "arena", "argue", "arise", "array", "arrow", "aside", "asset", "audio", "audit", "avoid", "award", "aware", "awful"
+
     },
+
     B = {
+
         "bat", "bag", "bad", "ban", "bar", "bed", "bet", "big", "bit", "box", "bus", "but", "buy", "back", "ball", "band", "bank", "base", "bear", "beat", "been", "bird", "blue", "boat", "body", "book", "born", "both", "bring",
+
         "bacon", "badge", "baker", "basic", "batch", "bathe", "beach", "beast", "begin", "beige", "belly", "bench", "berry", "birth", "black", "blade", "blame", "blank", "blast", "blaze", "bleak", "blend", "bless", "blind", "blink", "block", "blond", "blood", "bloom", "board", "boast", "bonus", "boost", "booth", "bound", "bowel", "brain", "brake", "brand", "brass", "brave", "bread", "break", "brick", "bride", "brief", "broad", "brown", "brush", "buddy", "build", "bunch", "burst"
+
     },
+
     C = {
+
         "cab", "can", "cap", "car", "cat", "cup", "cut", "call", "came", "camp", "card", "care", "case", "cash", "cast", "city", "club", "coat", "cold", "come", "cool", "copy", "corn", "cost", "crew",
+
         "cabin", "cable", "camel", "canal", "candy", "canoe", "cargo", "carry", "carve", "catch", "cause", "cease", "chain", "chair", "chalk", "chaos", "charm", "chart", "chase", "cheap", "check", "cheek", "cheer", "chess", "chest", "chick", "chief", "child", "chill", "china", "chips", "chord", "chunk", "cigar", "civic", "civil", "claim", "clamp", "clash", "class", "clean", "clear", "clerk", "click", "cliff", "climb", "cling", "clock", "clone", "close", "cloth", "cloud", "clown", "coach", "coast", "color", "couch", "court", "cover", "crack", "craft", "crash", "crazy", "cream", "creek", "crowd", "crown", "crush", "cycle"
+
     },
+
     D = {
+
         "dad", "dam", "day", "den", "did", "die", "dig", "dim", "dip", "dog", "dot", "dry", "due", "dug", "dark", "data", "date", "dead", "deal", "dear", "deep", "desk", "does", "done", "door", "down", "draw", "drop", "drug", "dust",
+
         "daily", "dairy", "dance", "darts", "death", "debut", "decay", "delay", "delta", "demon", "dense", "depth", "devil", "diary", "diner", "dirty", "disco", "diver", "dizzy", "dodge", "doing", "donor", "doubt", "dozen", "draft", "drain", "drama", "drank", "dream", "dress", "drift", "drill", "drink", "drive", "drove", "drunk", "dummy", "dumpy", "dunce", "dwell", "dying"
+
     },
+
     E = {
+
         "ear", "eat", "egg", "end", "era", "eye", "each", "east", "easy", "edge", "else", "even", "ever", "evil", "exit", "early", "earth", "eight", "empty", "enemy", "enjoy", "enter", "entry", "equal", "error", "event", "every", "exact", "exist", "extra",
+
         "eager", "eagle", "elbow", "elder", "elect", "elite", "elope", "email", "ember", "enact", "ensue", "equip", "erase", "erect", "erupt", "essay", "ethic", "evade", "evoke", "exact", "exalt", "excel", "exert", "exile", "expel"
+
     },
+
     F = {
+
         "fab", "fad", "fan", "far", "fat", "fax", "fed", "fee", "few", "fig", "fin", "fit", "fix", "fly", "fog", "for", "fox", "fun", "fur", "face", "fact", "fail", "fair", "fall", "fame", "farm", "fast", "fear", "feel", "feet", "fell", "felt", "file", "fill", "film", "find", "fine", "fire", "firm", "fish", "five", "flat", "flew", "flow", "food", "foot", "form", "fort", "four", "free", "from", "fuel", "full", "fund",
+
         "fable", "faint", "faith", "false", "fancy", "fault", "favor", "feast", "fence", "ferry", "fetch", "fever", "fiber", "field", "fifth", "fifty", "fight", "final", "first", "flame", "flash", "flask", "flesh", "flint", "float", "flock", "flood", "floor", "flour", "fluid", "flush", "flute", "focal", "focus", "force", "forge", "forth", "forty", "forum", "found", "frame", "fraud", "fresh", "front", "frost", "fruit", "fudge", "funny"
+
     },
+
     G = {
+
         "gab", "gag", "gap", "gas", "gay", "gel", "gem", "get", "gig", "god", "got", "gum", "gun", "gut", "guy", "gym", "gain", "game", "gang", "gate", "gave", "gear", "gene", "gift", "girl", "give", "glad", "goal", "goes", "gold", "golf", "gone", "good", "grab", "gray", "grew", "grid", "grin", "grip", "grow", "gulf",
+
         "gantt", "gaunt", "gauze", "gavel", "geese", "genre", "ghost", "giant", "glare", "glass", "glaze", "gleam", "glide", "gloom", "glory", "glove", "gnome", "grace", "grade", "grain", "grand", "grant", "grape", "graph", "grasp", "grass", "grate", "grave", "gravy", "great", "green", "greet", "grief", "grill", "grind", "groom", "gross", "group", "grove", "guard", "guess", "guest", "guide", "guild", "guilt", "gypsy"
+
     },
+
     H = {
+
         "had", "ham", "has", "hat", "hay", "hem", "hen", "her", "hid", "him", "hip", "his", "hit", "hog", "hop", "hot", "how", "hub", "hue", "hug", "hum", "hung", "hurt", "half", "hall", "hand", "hang", "hard", "harm", "hate", "have", "head", "hear", "heat", "held", "hell", "help", "here", "hero", "hide", "high", "hill", "hold", "hole", "holy", "home", "hope", "horn", "host", "hour", "huge", "human", "humor", "hurry",
+
         "habit", "hairy", "happy", "harsh", "hatch", "haunt", "hazel", "heart", "heavy", "hedge", "hefty", "heist", "hello", "hence", "hinge", "hobby", "hoist", "honey", "honor", "horse", "hotel", "hound", "house", "hover", "humid", "hurry", "hutch"
+
     },
+
     I = {
+
         "ice", "icy", "ill", "ink", "inn", "ion", "idea", "inch", "into", "iron", "item", "image", "imply", "index", "inner", "input", "issue", "itself",
+
         "idiot", "igloo", "ignore", "imbue", "impel", "inane", "incur", "inept", "inert", "infer", "ingot", "inject", "inlet", "inset", "intro", "invade", "invite", "invoke", "irate", "irony", "islet", "ivory"
+
     },
+
     J = {
+
         "jab", "jag", "jam", "jar", "jaw", "jay", "jet", "jig", "job", "jog", "joy", "jug", "jazz", "jean", "jerk", "jolt", "joke", "join", "judge", "juice", "jump", "just",
+
         "jaded", "jelly", "jewel", "jiffy", "joint", "joker", "jolly", "joust", "judgy", "jumbo", "jumps", "junky", "juror"
+
     },
+
     K = {
+
         "keg", "ken", "key", "kid", "kin", "kit", "keen", "keep", "kept", "kick", "kill", "kind", "king", "kiss", "kite", "knee", "knew", "knife", "knock", "know", "known",
+
         "karma", "kayak", "kebab", "khaki", "kneel", "knelt", "knoll", "koala", "kooky", "krill"
+
     },
+
     L = {
+
         "lab", "lac", "lad", "lag", "lap", "law", "lay", "lea", "led", "leg", "let", "lid", "lie", "lip", "lit", "log", "lot", "low", "lack", "lady", "laid", "lake", "lamp", "land", "lane", "last", "late", "lead", "leaf", "lean", "leap", "left", "lend", "less", "liar", "life", "lift", "like", "lily", "limb", "lime", "line", "link", "lion", "list", "live", "load", "loan", "lock", "logo", "lone", "long", "look", "loop", "lord", "lose", "loss", "lost", "lots", "loud", "love", "luck", "lung", "lying",
-        "label", "labor", "lance", "large", "larva", "laser", "lasso", "latch", "later", "latex", "laugh", "layer", "leach", "learn", "lease", "leash", "least", "leave", "ledge", "leech", "legal", "lemon", "level", "lever", "light", "lilac", "limit", "linen", "liner", "lingo", "liter", "liver", "lobby", "local", "locus", "lodge", "loft", "logic", "loose", "lover", "lower", "loyal", "lucid", "lucky", "lumen", "lumpy", "lunar", "lunch", "lunge", "lurch", "lyric"
+
+        "label", "labor", "lance", "large", "larva", "laser", "lasso", "latch", "later", "latex", "laugh", "layer", "leach", "learn", "lease", "leash", "least", "leave", "ledge", "leech", "legal", "lemon", "level", "lever", "light", "lilac", "limit", "linen", "liner", "lingo", "liter", "liver", "lobby", "local", "locus", "lodge", "loft", "logic", "loose", "lover", "lower", "loyal", "lucid", "lucky", "lumen", "lumpy", "lunar", "lunch", "lunge", "lurch", "lyric", "lxi"
+
     },
+
     M = {
+
         "mad", "mag", "man", "map", "mar", "mat", "may", "men", "met", "mid", "mix", "mob", "mom", "mop", "mud", "mug", "made", "mail", "main", "make", "male", "mall", "many", "mark", "mask", "mass", "mate", "math", "meal", "mean", "meat", "meet", "melt", "memo", "menu", "mere", "mess", "mile", "milk", "mill", "mind", "mine", "mint", "miss", "mode", "mold", "mood", "moon", "more", "most", "moth", "move", "much", "must", "myth",
+
         "machine", "macro", "magic", "magnet", "major", "maker", "mango", "mania", "manor", "maple", "march", "margin", "marine", "market", "marry", "marsh", "match", "matter", "maxim", "maybe", "mayor", "medal", "media", "medic", "melon", "mercy", "merge", "merit", "merry", "metal", "meter", "metro", "micro", "middle", "midst", "might", "mimic", "miner", "minor", "minus", "minute", "mirror", "miser", "model", "modem", "moist", "molar", "money", "month", "moral", "motor", "mount", "mouse", "mouth", "movie", "mummy", "music", "mutual"
+
     },
+
     N = {
+
         "nab", "nag", "nap", "net", "new", "nil", "nip", "nit", "nod", "nor", "not", "now", "nun", "nut", "nail", "name", "navy", "near", "neat", "neck", "need", "nest", "news", "next", "nice", "nick", "nine", "node", "none", "noon", "norm", "nose", "note", "noun",
+
         "nacho", "naive", "naked", "nasty", "native", "naval", "navel", "needle", "neigh", "nerdy", "nerve", "never", "newer", "newly", "nicer", "niche", "niece", "night", "ninja", "noble", "noise", "noisy", "nomad", "noose", "north", "notch", "novel", "nurse", "nylon"
+
     },
+
     O = {
+
         "oak", "oar", "oat", "odd", "off", "oil", "old", "one", "opt", "orb", "ore", "our", "out", "owe", "owl", "own", "obey", "odor", "okay", "once", "only", "onto", "open", "oral", "oven", "over", "owed", "owner", "occur", "ocean", "offer", "often", "olive", "onion", "opera", "orbit", "order", "organ", "other", "ought", "outer",
+
         "oasis", "object", "obscure", "obsess", "obtain", "occupy", "octave", "offend", "office", "offset", "older", "omelet", "onset", "opera", "opium", "oppose", "optic", "option", "oracle", "orange", "orbit", "orchid", "ordeal", "origin", "ornate", "orphan", "ounce", "outfit", "outlet", "output", "oval", "ovary", "overt", "oxide", "ozone"
+
     },
+
     P = {
+
         "pad", "pal", "pan", "par", "pat", "paw", "pay", "pea", "peg", "pen", "per", "pet", "pie", "pig", "pin", "pit", "pod", "pop", "pot", "pro", "pub", "pug", "pun", "pup", "put", "pace", "pack", "page", "paid", "pain", "pair", "pale", "palm", "pant", "park", "part", "pass", "past", "path", "pave", "peak", "peer", "pick", "pier", "pile", "pine", "pink", "pipe", "pity", "plan", "play", "plea", "plot", "plug", "plus", "poem", "poet", "pole", "poll", "pond", "pool", "poor", "pope", "pork", "port", "pose", "post", "pour", "pray", "prep", "prey", "prim", "prod", "prop", "pull", "pump", "punk", "pure", "push",
+
         "packet", "pagan", "paint", "panel", "panic", "paper", "parade", "parcel", "parent", "party", "pasta", "paste", "patch", "patio", "pause", "peace", "peach", "pearl", "pecan", "pedal", "penny", "people", "pepper", "perch", "peril", "petal", "petty", "phase", "phone", "photo", "piano", "piece", "pilot", "pinch", "piper", "pitch", "pivot", "pixel", "pizza", "place", "plaid", "plain", "plane", "plank", "plant", "plate", "plaza", "plead", "plumb", "plume", "plush", "pocket", "point", "poise", "poker", "polar", "police", "polite", "pouch", "pound", "power", "prank", "prawn", "press", "price", "pride", "prime", "print", "prior", "prism", "prize", "probe", "prone", "proof", "proud", "prove", "prowl", "proxy", "prune", "public", "pulse", "punch", "pupil", "puppy", "purge", "purse"
+
     },
+
     Q = {
+
         "quad", "quay", "quell", "query", "quest", "queue", "quick", "quiet", "quilt", "quirk", "quite", "quota", "quote",
+
         "quack", "quail", "quake", "qualm", "quant", "quart", "queen", "queer", "quill", "quint", "quip", "quiz"
+
     },
+
     R = {
+
         "rag", "ram", "ran", "rap", "rat", "raw", "ray", "red", "ref", "rep", "rib", "rid", "rig", "rim", "rip", "rob", "rod", "roe", "rot", "row", "rub", "rug", "run", "rut", "race", "rack", "rage", "raid", "rail", "rain", "rank", "rare", "rate", "rave", "read", "real", "rear", "rely", "rent", "rest", "rice", "rich", "ride", "ring", "riot", "rise", "risk", "road", "roam", "rock", "rode", "role", "roll", "roof", "room", "root", "rope", "rose", "rude", "ruin", "rule", "rush",
+
         "rabbit", "radar", "radio", "radius", "raise", "rally", "ranch", "range", "rapid", "ratio", "raven", "razor", "reach", "react", "ready", "realm", "rebel", "recall", "recipe", "record", "refer", "reform", "refuse", "regal", "region", "regret", "reign", "reject", "relax", "relay", "relief", "remind", "remote", "remove", "renew", "repair", "repeat", "reply", "report", "rescue", "resent", "reset", "resort", "result", "resume", "retail", "retain", "retire", "reveal", "revert", "review", "revise", "reward", "rhyme", "rhythm", "ribbon", "rider", "ridge", "rifle", "right", "rigid", "rinse", "ripen", "ripple", "risky", "ritual", "rival", "river", "roast", "robot", "rocket", "rogue", "roman", "rough", "round", "route", "rover", "royal", "rubber", "rugby", "ruler", "rumor", "runner", "rural", "rustic"
+
     },
+
     S = {
+
         "sad", "sag", "sap", "sat", "saw", "say", "sea", "set", "sew", "sex", "she", "shy", "sin", "sip", "sir", "sis", "sit", "six", "ski", "sky", "sob", "sod", "son", "sop", "sow", "spa", "spy", "sub", "sue", "sum", "sun", "sup", "safe", "sage", "said", "sail", "sake", "sale", "salt", "same", "sand", "sang", "sank", "save", "scan", "seal", "seat", "seed", "seek", "seem", "seen", "self", "sell", "send", "sent", "shed", "ship", "shop", "shot", "show", "shut", "sick", "side", "sigh", "sign", "silk", "sing", "sink", "site", "size", "skin", "skip", "slam", "slid", "slim", "slip", "slow", "snap", "snow", "soak", "soap", "sock", "sofa", "soft", "soil", "sold", "sole", "some", "song", "soon", "sort", "soul", "soup", "spot", "star", "stay", "stem", "step", "stir", "stop", "such", "suck", "suit", "sung", "sunk", "sure", "swim",
+
         "saddle", "salad", "salon", "salsa", "sample", "sauce", "sauna", "scale", "scalp", "scare", "scarf", "scene", "scent", "school", "scoop", "scope", "score", "scorn", "scout", "scrap", "screen", "screw", "script", "scroll", "scrub", "search", "season", "secret", "sector", "sedan", "sense", "series", "serve", "setup", "shade", "shadow", "shaft", "shake", "shame", "shape", "share", "shark", "sharp", "shave", "sheep", "sheet", "shelf", "shell", "shift", "shine", "shirt", "shock", "shoe", "shoot", "shore", "short", "shout", "shove", "shrub", "shrug", "sight", "signal", "silent", "silver", "simple", "since", "single", "siren", "sister", "sketch", "skill", "skirt", "skull", "slack", "slate", "slave", "sleep", "slice", "slide", "slight", "sling", "slope", "slot", "slump", "small", "smart", "smash", "smell", "smile", "smoke", "snack", "snail", "snake", "sneak", "sniff", "snooze", "snowy", "sober", "soccer", "social", "socket", "solar", "solid", "solve", "sonar", "sonic", "sound", "sour", "south", "space", "spade", "spare", "spark", "speak", "spear", "speech", "speed", "spell", "spend", "spice", "spicy", "spider", "spike", "spill", "spin", "spine", "spiral", "spirit", "spite", "split", "spoil", "spoke", "sponge", "spoon", "sport", "spray", "spread", "spring", "sprint", "spur", "squad", "square", "squash", "squat", "stable", "stack", "staff", "stage", "stain", "stair", "stake", "stale", "stalk", "stall", "stamp", "stand", "stare", "start", "state", "statue", "steak", "steal", "steam", "steel", "steep", "steer", "stick", "stiff", "still", "sting", "stock", "stole", "stone", "stool", "store", "storm", "story", "stove", "strap", "straw", "stray", "street", "stress", "strict", "stride", "strike", "string", "strip", "strive", "stroke", "stroll", "strong", "struck", "strung", "stuck", "stud", "study", "stuff", "stump", "stung", "style", "sugar", "surge", "sushi", "swamp", "swan", "swarm", "swear", "sweat", "sweep", "sweet", "swell", "swept", "swift", "swing", "swipe", "swirl", "switch", "sword", "swung", "syrup"
+
     },
+
     T = {
+
         "tab", "tad", "tag", "tan", "tap", "tar", "tax", "tea", "ten", "the", "tie", "tin", "tip", "toe", "ton", "too", "top", "tow", "toy", "try", "tub", "tug", "two", "take", "tale", "talk", "tall", "tank", "tape", "task", "team", "tear", "tech", "teen", "tell", "tend", "tent", "term", "test", "text", "than", "that", "them", "then", "they", "thin", "this", "thus", "tide", "tidy", "tier", "tile", "till", "tilt", "time", "tiny", "tire", "toad", "told", "toll", "tomb", "tone", "took", "tool", "tops", "tore", "torn", "toss", "tour", "town", "trap", "tray", "tree", "trim", "trip", "true", "tube", "tuck", "tune", "turf", "turn", "twin", "type",
+
         "table", "tablet", "tackle", "tactic", "tailor", "talent", "tally", "tame", "tango", "target", "tariff", "taste", "tasty", "tattoo", "teach", "teeth", "tempo", "tenant", "tennis", "tense", "terror", "thank", "thaw", "theft", "theme", "theory", "there", "therm", "thick", "thief", "thigh", "thing", "think", "third", "thirst", "thorn", "those", "three", "threw", "throb", "throw", "thumb", "thump", "ticket", "tiger", "tight", "timber", "timer", "times", "timid", "toast", "today", "token", "tomato", "tonic", "tooth", "topic", "torch", "total", "touch", "tough", "towel", "tower", "toxic", "trace", "track", "tract", "trade", "trail", "train", "trait", "trash", "travel", "tread", "treat", "trend", "trial", "tribe", "trick", "tried", "trifle", "troop", "trophy", "trousers", "truck", "trunk", "trust", "truth", "tulip", "tumble", "tuna", "tunic", "turbo", "turkey", "turtle", "tutor", "tweet", "twice", "twist", "tycoon"
+
     },
+
     U = {
+
         "ugh", "undo", "unit", "upon", "urge", "used", "user", "ultra", "uncle", "under", "union", "unite", "unity", "until", "upper", "upset", "urban", "urged", "using", "usual",
+
         "udder", "ugly", "ulcer", "umbra", "undue", "unfit", "unify", "untie", "update", "uphill", "upload", "uproar", "upside", "upward", "usage", "usher", "utility", "utmost", "utter"
+
     },
+
     V = {
+
         "van", "vat", "vet", "via", "vie", "vim", "vow", "vain", "vale", "vary", "vast", "veil", "vein", "verb", "very", "vest", "vice", "view", "vine", "visa", "void", "volt", "vote", "value", "valid", "vapor", "vault", "venue", "verse", "video", "vigil", "vigor", "viral", "virus", "visit", "vital", "vivid", "vocal", "voice", "voter",
+
         "vacant", "vacuum", "vague", "valley", "valve", "vamp", "vane", "vase", "veal", "veer", "vegan", "vend", "vent", "verge", "verify", "vessel", "vested", "vial", "vibe", "victim", "victor", "video", "villa", "vinyl", "violin", "virtue", "visage", "vision", "visual", "vixen", "vocal", "vodka", "vogue", "voice", "void", "volley", "volume", "vomit", "vortex", "vowel", "voyage", "vulgar"
+
     },
+
     W = {
+
         "wad", "wag", "war", "was", "wax", "way", "web", "wed", "wet", "who", "why", "wig", "win", "wit", "woe", "wok", "won", "woo", "wow", "wade", "wage", "wait", "wake", "walk", "wall", "want", "ward", "warm", "warn", "wary", "wash", "wave", "wavy", "weak", "wear", "weed", "week", "weep", "weigh", "well", "went", "were", "west", "what", "when", "whip", "wide", "wife", "wild", "will", "wind", "wine", "wing", "wink", "wire", "wise", "wish", "with", "woke", "wolf", "womb", "won't", "wood", "wool", "word", "wore", "work", "worm", "worn", "wrap", "wren",
+
         "wafer", "waffle", "wagon", "waist", "waltz", "wander", "wane", "ware", "warmth", "warp", "wart", "waste", "watch", "water", "watt", "wealth", "weapon", "weave", "wedge", "weird", "welder", "whale", "wheat", "wheel", "where", "which", "whiff", "while", "whim", "whine", "whirl", "whisky", "white", "whole", "whorl", "whose", "widen", "widow", "width", "wield", "willy", "wimp", "wince", "winch", "window", "windy", "winner", "winter", "wiper", "wired", "wisdom", "witch", "witty", "wizard", "woman", "women", "wonder", "world", "worry", "worse", "worst", "worth", "would", "wound", "woven", "wrath", "wreck", "wrist", "write", "wrong", "wrote"
+
     },
+
     X = {
+
         "xray", "xenon", "xerox", "xmas", "xylophone"
+
     },
+
     Y = {
+
         "yam", "yap", "yaw", "yen", "yes", "yet", "yew", "yield", "yolk", "young", "your", "youth", "yard", "yarn", "year", "yell", "yellow", "yesterday",
+
         "yacht", "yahoo", "yak", "yank", "yawn", "yeast", "yelp", "yoga", "yogurt", "yoke", "yonder", "yuck", "yummy"
+
     },
+
     Z = {
+
         "zap", "zeal", "zero", "zest", "zinc", "zone", "zoom", "zebra", "zipper", "zombie",
+
         "zany", "zebu", "zen", "zing", "zip", "zonk", "azure", "breeze", "crazy", "daze", "doze", "fizz", "fuzz", "gaze", "haze", "jazz", "lazy", "maze", "ooze", "prize", "quiz", "size", "sneeze"
+
     },
+
 }
 
+
+
 -- [Word List Loader - Kept same as original]
+
 local function loadExternalWordList()
+
     local function getEnvFunc(name)
+
         if _G[name] then return _G[name] end
+
         if getgenv then 
+
             local env = getgenv()
+
             if env[name] then return env[name] end
+
         end
+
         return nil
+
     end
 
+
+
     local _isfile = getEnvFunc("isfile")
+
     local _readfile = getEnvFunc("readfile")
+
     local _writefile = getEnvFunc("writefile")
+
     local fileName = "AutoPlay_WordList.txt"
+
     local content = nil
+
     
+
     if _isfile and _readfile and _isfile(fileName) then
+
         pcall(function() content = _readfile(fileName) end)
+
     end
+
     
+
     if not content then
-        local url = "https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt"
+
+        local url = "https://raw.githubusercontent.com/Aktron01/words/refs/heads/main/ad"
+
         local success, response = pcall(function() return game:HttpGet(url) end)
+
         if success and response then
+
             content = response
+
             if _writefile then pcall(function() _writefile(fileName, content) end) end
+
         end
+
     end
+
     
+
     if content then
+
         local newDB = {}
+
         local count = 0
+
         for word in content:gmatch("[a-zA-Z]+") do
+
             if #word >= (CONFIG.MinWordLength or 3) then
+
                 local first = word:sub(1, 1):upper()
+
                 if not newDB[first] then newDB[first] = {} end
+
                 table.insert(newDB[first], word)
+
                 count = count + 1
+
             end
+
         end
+
         if count > 1000 then
+
             WORD_DATABASE = newDB
+
             if CONFIG.UseShortWords then
+
                 for letter, list in pairs(WORD_DATABASE) do
+
                     table.sort(list, function(a, b) return #a < #b end)
+
                 end
+
             end
+
         end
+
     end
+
 end
+
+
 
 task.spawn(loadExternalWordList)
 
+
+
 local usedWords = {}
 
+
+
 local function getValidWord(prefix)
+
     if not prefix or prefix == "" then return nil end
+
     local startLetter = prefix:sub(1, 1):upper()
+
     local words = WORD_DATABASE[startLetter]
+
     if not words then return nil end
+
     
+
     local validWords = {}
+
     local prefixLower = prefix:lower()
+
     
+
     for _, word in ipairs(words) do
+
         if #word >= CONFIG.MinWordLength and #word <= CONFIG.MaxWordLength then
+
             if word:sub(1, #prefix):lower() == prefixLower then
+
                 if not usedWords[word:lower()] then
+
                     table.insert(validWords, word:lower())
+
                 end
+
             end
+
         end
+
     end
+
     
+
     if #validWords == 0 then
+
         -- Fallback to reuse words if no fresh ones found
+
         for _, word in ipairs(words) do
+
             if #word >= CONFIG.MinWordLength and #word <= CONFIG.MaxWordLength then
+
                 if word:sub(1, #prefix):lower() == prefixLower then
+
                     table.insert(validWords, word:lower())
+
                 end
+
             end
+
         end
+
     end
+
     
+
     if #validWords == 0 then return nil end
+
     
+
     if CONFIG.UseShortWords then
+
         table.sort(validWords, function(a, b) return #a < #b end)
+
     end
+
     
+
     local selectedWord
+
     if CONFIG.RandomizeWords then
+
         local index = math.random(1, math.min(5, #validWords))
+
         selectedWord = validWords[index]
+
     else
+
         selectedWord = validWords[1]
+
     end
+
     
+
     usedWords[selectedWord] = true
+
     return selectedWord
+
 end
+
+
 
 local function typeLetter(letter, holdDuration)
+
     local keyCode = Enum.KeyCode[string.upper(letter)]
+
     if keyCode then
+
         VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+
         task.wait(holdDuration or 0.015)
+
         VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+
     end
+
 end
+
+
 
 local function randomFloat(min, max)
+
     return min + math.random() * (max - min)
+
 end
+
+
 
 -- // NEW REWRITTEN TYPING FUNCTION \\ --
+
 local function typeWord(word, reactionDelay)
+
     -- Calculate a time budget to ensure we stay under 5 seconds
+
     -- We select a random target duration between MinTotalTime and MaxTotalTime
+
     local targetTotalDuration = randomFloat(CONFIG.MinTotalTime, CONFIG.MaxTotalTime)
+
     
+
     -- If the reaction delay was huge, we reduce the target time so we don't go over limit
+
     if (reactionDelay + 0.5) > targetTotalDuration then
+
         targetTotalDuration = reactionDelay + 0.5 + (#word * 0.1)
+
     end
+
     
+
     -- Ensure we never exceed the hard limit of 4.9s
+
     if targetTotalDuration > 4.9 then targetTotalDuration = 4.9 end
+
     
+
     -- Calculate how much time we have left to actually type
+
     local timeAvailableForTyping = targetTotalDuration - reactionDelay - CONFIG.SubmitDelay
+
     
+
     -- Calculate average delay needed per character
+
     local avgDelayPerChar = timeAvailableForTyping / #word
+
     
+
     -- Safety clamps: Don't be impossibly fast, don't be robotically slow
+
     -- If the word is very short, we can afford to be slower.
+
     -- If the word is long, we must be faster.
+
     if avgDelayPerChar < 0.04 then avgDelayPerChar = 0.04 end 
+
     
+
     for i = 1, #word do
+
         local letter = string.sub(word, i, i)
+
         
+
         -- Calculate specific delay for this keystroke based on the average + noise
+
         local currentDelay = avgDelayPerChar * randomFloat(0.8, 1.2)
+
         
+
         -- Human behavior: Sometimes we pause slightly (thinking)
+
         if math.random() < CONFIG.MicroPauseChance and i > 1 then
+
             currentDelay = currentDelay + randomFloat(0.15, 0.3)
+
         end
+
         
+
         -- If we are running out of time (closer to 5s), speed up drastically!
+
         if i > (#word / 2) and avgDelayPerChar > 0.15 then
+
             currentDelay = currentDelay * 0.8 -- Speed up end of word
+
         end
+
         
+
         task.wait(currentDelay)
+
         
+
         -- Randomize how long the key is held down
+
         local holdTime = randomFloat(0.01, 0.05)
+
         typeLetter(letter, holdTime)
+
     end
+
 end
+
+
 
 local function submitWord()
+
     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+
     task.wait(0.02)
+
     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+
 end
+
+
 
 -- [UI Finding Helper Functions]
+
 local function getRequiredLetterLabel()
+
     local success, result = pcall(function()
+
         local inGameUI = PlayerGui:FindFirstChild("InGame")
+
         if not inGameUI then return nil end
+
         local frame = inGameUI:FindFirstChild("Frame")
+
         if not frame then return nil end
+
         
+
         local typeLabel = frame:FindFirstChild("Type")
+
         if typeLabel and typeLabel:IsA("TextLabel") then
+
             local text = typeLabel.Text
+
             local letter = text:match("starting with:%s*(%a)")
+
             if letter then return letter:upper() end
+
             letter = text:match("can form a word with:%s*(%a)")
+
             if letter then return letter:upper() end
+
         end
+
         return nil
+
     end)
+
     return success and result or nil
+
 end
+
+
 
 local function isOurTurn()
+
     local success, result = pcall(function()
+
         local inGameUI = PlayerGui:FindFirstChild("InGame")
+
         if not inGameUI then return false end
+
         
+
         local frame = inGameUI:FindFirstChild("Frame")
+
         if not frame or not frame.Visible then return false end
+
         
+
         local circle = frame:FindFirstChild("Circle")
+
         if not circle or not circle.Visible then return false end
+
         
+
         local typeLabel = frame:FindFirstChild("Type")
+
         if typeLabel and typeLabel:IsA("TextLabel") then
+
             local text = typeLabel.Text
+
             local displayName = LocalPlayer.DisplayName
+
             local userName = LocalPlayer.Name
+
             if string.find(text, displayName .. ",") or string.find(text, userName .. ",") then
+
                 return true
+
             end
+
         end
+
         return false
+
     end)
+
     return success and result or false
+
 end
+
+
 
 local function isInGame()
+
     local inTable = LocalPlayer:GetAttribute("InTable")
+
     return inTable ~= nil
+
 end
+
+
 
 local function getCurrentPrefix()
+
     local success, result = pcall(function()
+
         local inGameUI = PlayerGui:FindFirstChild("InGame")
+
         if not inGameUI then return "" end
+
         local frame = inGameUI:FindFirstChild("Frame")
+
         if not frame then return "" end
+
         local currentWord = frame:FindFirstChild("CurrentWord")
+
         if not currentWord then return "" end
+
         
+
         local text = ""
+
         local index = 1
+
         while true do
+
             local charFrame = currentWord:FindFirstChild(tostring(index))
+
             if not charFrame then break end
+
             if charFrame:IsA("Frame") and charFrame.Visible then
+
                 local letterLabel = charFrame:FindFirstChild("Letter")
+
                 if letterLabel and letterLabel:IsA("TextLabel") then
+
                     text = text .. letterLabel.Text
+
                 end
+
             end
+
             index = index + 1
+
         end
+
         return text
+
     end)
+
     return success and result or ""
+
 end
+
+
 
 -- // UPDATED MAIN LOGIC \\ --
+
 local isProcessing = false
+
 local lastPlayTime = 0
 
+
+
 local function autoPlay()
+
     if isProcessing then return end
+
     if not CONFIG.Enabled then return end
+
     if not isInGame() then return end
+
     if not isOurTurn() then return end
+
     
+
     local now = tick()
+
     if now - lastPlayTime < 1.0 then return end -- Basic debounce
+
     
+
     isProcessing = true
+
     lastPlayTime = now
+
     
+
     -- 1. Get the prefix/letters on screen
+
     local prefix = getCurrentPrefix()
+
     if prefix == "" then
+
         local req = getRequiredLetterLabel()
+
         if req then prefix = req end
+
     end
+
     
+
     if prefix == "" then
+
         isProcessing = false
+
         return
+
     end
+
     
+
     -- 2. Find a valid word
+
     local fullWord = getValidWord(prefix)
+
     if not fullWord then
+
         isProcessing = false
+
         return
+
     end
+
     
+
     local suffix = fullWord:sub(#prefix + 1)
+
     
+
     -- 3. Human Reaction Time (Delay before doing anything)
+
     local reactionTime = randomFloat(CONFIG.ReactionMin, CONFIG.ReactionMax)
+
     task.wait(reactionTime)
+
     
+
     -- 4. Type the rest of the word
+
     if suffix ~= "" then
+
         typeWord(suffix, reactionTime)
+
     end
+
     
+
     -- 5. Submit with a small random delay
+
     local finalDelay = CONFIG.SubmitDelay + randomFloat(0, 0.1)
+
     task.wait(finalDelay)
+
     submitWord()
+
     
+
     isProcessing = false
+
 end
+
+
 
 -- [Monitoring & UI - Kept same as original]
+
 local function startMonitoring()
+
     task.spawn(function()
+
         while task.wait(0.1) do
+
             if CONFIG.Enabled then
+
                 autoPlay()
+
             end
+
         end
+
     end)
+
     
+
     LocalPlayer:GetAttributeChangedSignal("InTable"):Connect(function()
+
         if LocalPlayer:GetAttribute("InTable") then
+
             usedWords = {}
+
         end
+
     end)
+
 end
+
+
 
 local function createToggleUI()
+
     local screenGui = Instance.new("ScreenGui")
+
     screenGui.Name = "AutoPlayUI"
+
     screenGui.ResetOnSpawn = false
+
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
     
+
     local frame = Instance.new("Frame")
+
     frame.Size = UDim2.new(0, 180, 0, 150)
+
     frame.Position = UDim2.new(0, 10, 0.5, -75)
+
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+
     frame.BorderSizePixel = 0
+
     frame.Parent = screenGui
+
     
+
     local corner = Instance.new("UICorner")
+
     corner.CornerRadius = UDim.new(0, 8)
+
     corner.Parent = frame
+
     
+
     local title = Instance.new("TextLabel")
+
     title.Size = UDim2.new(1, 0, 0, 25)
+
     title.BackgroundTransparency = 1
+
     title.Text = "AutoPlay Human+"
+
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
+
     title.TextSize = 14
+
     title.Font = Enum.Font.GothamBold
+
     title.Parent = frame
+
     
+
     local toggleBtn = Instance.new("TextButton")
+
     toggleBtn.Size = UDim2.new(0.9, 0, 0, 30)
+
     toggleBtn.Position = UDim2.new(0.05, 0, 0, 30)
+
     toggleBtn.BackgroundColor3 = CONFIG.Enabled and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+
     toggleBtn.Text = CONFIG.Enabled and "ENABLED" or "DISABLED"
+
     toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+
     toggleBtn.TextSize = 12
+
     toggleBtn.Font = Enum.Font.GothamBold
+
     toggleBtn.Parent = frame
+
     
+
     local toggleCorner = Instance.new("UICorner")
+
     toggleCorner.CornerRadius = UDim.new(0, 6)
+
     toggleCorner.Parent = toggleBtn
+
     
+
     local statusLabel = Instance.new("TextLabel")
+
     statusLabel.Size = UDim2.new(1, 0, 0, 20)
+
     statusLabel.Position = UDim2.new(0, 0, 0, 65)
+
     statusLabel.BackgroundTransparency = 1
+
     statusLabel.Text = "Waiting..."
+
     statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+
     statusLabel.TextSize = 10
+
     statusLabel.Font = Enum.Font.Gotham
+
     statusLabel.Parent = frame
+
     
+
     toggleBtn.MouseButton1Click:Connect(function()
+
         CONFIG.Enabled = not CONFIG.Enabled
+
         toggleBtn.BackgroundColor3 = CONFIG.Enabled and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(180, 80, 80)
+
         toggleBtn.Text = CONFIG.Enabled and "ENABLED" or "DISABLED"
+
     end)
+
     
+
     task.spawn(function()
+
         while task.wait(0.5) do
+
             if screenGui.Parent then
+
                 if not isInGame() then
+
                     statusLabel.Text = "Not in game"
+
                 elseif isOurTurn() then
+
                     statusLabel.Text = "Your turn!"
+
                     statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+
                 else
+
                     statusLabel.Text = "Waiting for turn..."
+
                     statusLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+
                 end
+
             end
+
         end
+
     end)
+
     
+
     -- Dragging logic
+
     local dragging = false
+
     local dragStart, startPos
+
     
+
     frame.InputBegan:Connect(function(input)
+
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+
             dragging = true
+
             dragStart = input.Position
+
             startPos = frame.Position
+
         end
+
     end)
+
     
+
     frame.InputEnded:Connect(function(input)
+
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+
             dragging = false
+
         end
+
     end)
+
     
+
     UserInputService.InputChanged:Connect(function(input)
+
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+
             local delta = input.Position - dragStart
+
             frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+
         end
+
     end)
+
     
+
     screenGui.Parent = PlayerGui
+
     return screenGui
+
 end
 
+
+
 createToggleUI()
+
 startMonitoring()
