@@ -34,9 +34,9 @@ local CONFIG = {
 
     HumanMode = true,       -- Must be true for the new logic to work
 
-    MaxTotalTime = 4.8,     -- HARD LIMIT: Will never take longer than this (seconds)
+    MaxTotalTime = 3,     -- HARD LIMIT: Will never take longer than this (seconds)
 
-    MinTotalTime = 1.5,     -- The fastest it might randomly try to be
+    MinTotalTime = 1,     -- The fastest it might randomly try to be
 
     
 
