@@ -19,8 +19,8 @@ local CONFIG = {
     MaxTotalTime = 3,       -- HARD LIMIT: Will never take longer than this (seconds)
     MinTotalTime = 1,       -- The fastest it might randomly try to be
     
-    ReactionMin = 0.35,     -- Time taken to "realize" it's your turn
-    ReactionMax = 0.90,     
+    ReactionMin = 1,     -- Time taken to "realize" it's your turn
+    ReactionMax = 2,     
     
     MistakeChance = 0,      -- (Optional feature, kept at 0 for now to ensure accuracy)
     MicroPauseChance = 0.15,-- Chance to hesitate mid-word
