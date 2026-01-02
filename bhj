@@ -11,7 +11,7 @@ local CONFIG = {
     Enabled = true,
     MinWordLength = 2,
     MaxWordLength = 30, -- Increased slightly to allow for longer killer words
-    UseShortWords = true,
+    UseShortWords = false,
     RandomizeWords = true,
     
     -- HUMANIZATION SETTINGS
